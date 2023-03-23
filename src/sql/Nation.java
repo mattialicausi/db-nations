@@ -1,6 +1,7 @@
 package sql;
 
 import java.sql.*;
+import java.util.Scanner;
 
 public class Nation {
 
@@ -10,6 +11,8 @@ public class Nation {
     private final static String PASSWORD = System.getenv("PASSWORD");
 
     public static void main(String[] args) {
+
+        Scanner scan = new Scanner(System.in);
 
         //apro una connessione
         try(Connection conn = DriverManager.getConnection(URL, USER, PASSWORD)) {
@@ -24,15 +27,32 @@ public class Nation {
                                         
                     join countries cr
                     on r.region_id = cr.region_id
+                    
+                    where cr.name like ?
+                    
                     order by cr.name
                     
                     """;
 
+            //chiedo all'utente di inserire una stringa per filtrare la ricerca
+            System.out.print("Insert a nation: ");
+            String wordForFilter = scan.nextLine();
+
+
             // creo il PreparedStatement per avviare la query
-            try(PreparedStatement ps = conn.prepareStatement(query)) {
+            try(PreparedStatement ps = conn.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
+
+                ps.setString(1, "%" + wordForFilter + "%");
 
                 // eseguo la query e metto il risultato nel ResultSet
                try(ResultSet rs = ps.executeQuery()) {
+
+                   if (!rs.next()) {
+                       System.out.println("No nation with this name ");
+                   } else {
+                       // devo tornare indietro per recuperare la prima riga
+                       rs.beforeFirst();
+                   }
 
                    //parso il ResultSet
                    while(rs.next()) {
@@ -56,6 +76,8 @@ public class Nation {
         }catch (SQLException e) {
             e.printStackTrace();
         }
+
+        scan.close();
 
     }
 }
