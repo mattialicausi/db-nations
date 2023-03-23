@@ -67,9 +67,64 @@ public class Nation {
                        System.out.printf("%40s%15d%50s%15d", nationName, nationId, regionName, regionId);
                        System.out.println();
 
-
                    }
+
                }
+
+            }
+
+            System.out.println("Insert id ");
+            int nationId = Integer.parseInt(scan.nextLine());
+
+            String queryId = """
+                                        
+                    select l.language, cs.year, cs.population, cs.gdp
+                    from countries c\s
+                                        
+                    join country_languages cl on c.country_id = cl.country_id\s
+                    join languages l on l.language_id = cl.language_id\s
+                                        
+                    join country_stats cs on cs.country_id = c.country_id
+                                        
+                    where c.country_id = ?
+                    
+                    order by cs.year desc
+                    
+                    limit 1
+                    
+                                        
+                    """;
+
+            try(PreparedStatement ps = conn.prepareStatement(queryId, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
+
+                ps.setInt(1, nationId);
+
+                try(ResultSet rs = ps.executeQuery()) {
+
+                    if (!rs.next()) {
+                        System.out.println("No nation with this id ");
+                    } else {
+                        // devo tornare indietro per recuperare la prima riga
+                        rs.beforeFirst();
+                    }
+
+                    //parso il ResultSet
+                    while(rs.next()) {
+
+                        String language = rs.getString("l.language");
+                        int year = rs.getInt("cs.year");
+                        int population = rs.getInt("cs.population");
+                        String gdp = rs.getString("cs.gdp");
+
+                        //stampo nel terminale i dati del db
+
+                        System.out.printf("%40s%15d%50d%15s", language, year, population, gdp);
+                        System.out.println();
+
+                    }
+
+                }
+
 
             }
 
